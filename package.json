@@ -1,0 +1,9 @@
+{
+  "name": "budget",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "alexa-sdk": "^1.0.25",
+    "googleapis": "^32.0.0"
+  }
+}
