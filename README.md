@@ -1,3 +1,3 @@
-# budget
+# daily-budget
 
-A skill for Alexa to add daily expenses to a budget Google Sheet
+An Alexa Skill to add expenses to a daily budget Google Sheet using AWS Lambda, Node.js, TypeScript, Serverless CLI.
