@@ -22,8 +22,9 @@ const FALLBACK_MESSAGE =
   "The Daily Budget skill can't help you with that. It can add an expense to your daily budget Google Sheet. What can I help you with?";
 const FALLBACK_REPROMPT = 'What can I help you with?';
 const STOP_MESSAGE = 'Goodbye!';
-const WELCOME_OUTPUT = "Let's add an expense. How much did you spend?";
-const WELCOME_REPROMPT = 'Let me know what you bought or how much you spent.';
+const WELCOME_OUTPUT =
+  'To get started say, add an expense. Or you can say, add $8 for Lyft.';
+const WELCOME_REPROMPT = 'To get started say, add an expense.';
 
 const LaunchRequestHandler = {
   canHandle(handlerInput: HandlerInput) {
@@ -71,9 +72,7 @@ const CompletedAddExpenseHandler = {
 
     const speechOutput = `Okay, I’ve added ${
       slotValues.expenseAmount.synonym
-    } for ${
-      slotValues.expenseItem.synonym
-    } to today’s expenses.`;
+    } for ${slotValues.expenseItem.synonym} to today’s expenses.`;
 
     return responseBuilder.speak(speechOutput).getResponse();
   },
@@ -194,11 +193,6 @@ function getSlotValues(filledSlots: Slots) {
   });
 
   return slotValues;
-}
-
-function getRandomPhrase(array: string[]) {
-  const i = Math.floor(Math.random() * array.length);
-  return array[i];
 }
 
 const skillBuilder = SkillBuilders.custom();

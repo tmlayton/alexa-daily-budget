@@ -29,13 +29,7 @@
               "samples": ["{expenseItem}"]
             }
           ],
-          "samples": [
-            "add {expenseAmount} for {expenseItem}",
-            "{expenseAmount}",
-            "i bought {expenseItem}",
-            "i spent {expenseAmount}",
-            "add an expense"
-          ]
+          "samples": ["add {expenseAmount} for {expenseItem}", "add an expense"]
         },
         {
           "name": "AMAZON.FallbackIntent",
