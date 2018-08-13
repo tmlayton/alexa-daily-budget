@@ -21,25 +21,12 @@
             {
               "name": "expenseAmount",
               "type": "CURRENCY",
-              "samples": [
-                "the expense was {expenseAmount}",
-                "it cost {expenseAmount}",
-                "I spent {expenseAmount}",
-                "it was {expenseAmount}",
-                "{expenseAmount}"
-              ]
+              "samples": ["{expenseAmount}"]
             },
             {
               "name": "expenseItem",
               "type": "EXPENSE_ITEMS",
-              "samples": [
-                "The expense was for {expenseItem}",
-                "The item was {expenseItem}",
-                "It was {expenseItem}",
-                "I was for {expenseItem}",
-                "I bought {expenseItem}",
-                "{expenseItem}"
-              ]
+              "samples": ["{expenseItem}"]
             }
           ],
           "samples": [
@@ -59,6 +46,11 @@
         {
           "name": "CURRENCY",
           "values": [
+            {
+              "name": {
+                "value": "$60"
+              }
+            },
             {
               "name": {
                 "value": "$80.00"
@@ -111,6 +103,11 @@
         {
           "name": "EXPENSE_ITEMS",
           "values": [
+            {
+              "name": {
+                "value": "gas"
+              }
+            },
             {
               "name": {
                 "value": "hot dogs"
@@ -222,7 +219,7 @@
               "confirmationRequired": false,
               "elicitationRequired": true,
               "prompts": {
-                "elicitation": "Elicit.Slot.1399636534279.315007744482"
+                "elicitation": "Elicit.Slot.1480560207931.843654528854"
               }
             }
           ]
@@ -235,36 +232,16 @@
         "variations": [
           {
             "type": "PlainText",
-            "value": "What did it cost?"
-          },
-          {
-            "type": "PlainText",
-            "value": "How much did you spend?"
-          },
-          {
-            "type": "PlainText",
-            "value": "How much was the expense?"
+            "value": "How much was it for?"
           }
         ]
       },
       {
-        "id": "Elicit.Slot.1399636534279.315007744482",
+        "id": "Elicit.Slot.1480560207931.843654528854",
         "variations": [
           {
             "type": "PlainText",
-            "value": "What was the expense for?"
-          },
-          {
-            "type": "PlainText",
-            "value": "What was the expense?"
-          },
-          {
-            "type": "PlainText",
-            "value": "What was the item?"
-          },
-          {
-            "type": "PlainText",
-            "value": "What did you buy?"
+            "value": "What was it for?"
           }
         ]
       }
