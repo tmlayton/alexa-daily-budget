@@ -1,1 +1,10 @@
+# package directories
 node_modules
+
+# serverless directories
+.build
+.serverless
+
+# files
+.DS_Store
+config.json

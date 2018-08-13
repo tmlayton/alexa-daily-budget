@@ -1,9 +1,30 @@
 {
-  "name": "budget",
+  "name": "daily-budget",
   "version": "1.0.0",
+  "description": "An Alexa Skill to add expenses to a daily budget Google Sheet using AWS Lambda, Node.js, TypeScript, and Serverless CLI.",
+  "main": "index.js",
   "private": true,
+  "author": "Tim Layton",
+  "license": "MIT",
   "dependencies": {
-    "alexa-sdk": "^1.0.25",
+    "ask-sdk": "^2.0.7",
     "googleapis": "^32.0.0"
+  },
+  "devDependencies": {
+    "@types/alexa-sdk": "^1.1.1",
+    "@types/node": "^10.5.8",
+    "eslint": "^4.8.0",
+    "eslint-plugin-shopify": "^23.1.0",
+    "prettier": "1.14.2",
+    "rimraf": "^2.6.2",
+    "serverless-plugin-typescript": "^1.1.5",
+    "typescript": "^3.0.1"
+  },
+  "scripts": {
+    "clean": "rimraf .build .serverless",
+    "prebuild": "yarn run clean",
+    "build": "serverless package",
+    "predeploy": "yarn run clean",
+    "deploy": "serverless deploy"
   }
 }

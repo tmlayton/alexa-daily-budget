@@ -1,0 +1,14 @@
+service: DailyBudget
+provider:
+  name: aws
+  runtime: nodejs6.10
+  region: us-west-2
+functions:
+  dailyBudget:
+    handler: index.handler
+    events:
+      - alexaSkill: amzn1.ask.skill.2a37a682-b4dc-4f22-96bc-120f23043b97
+plugins:
+  - serverless-plugin-typescript
+package:
+  excludeDevDependencies: true
