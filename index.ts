@@ -23,8 +23,7 @@ const FALLBACK_MESSAGE =
 const FALLBACK_REPROMPT = 'What can I help you with?';
 const STOP_MESSAGE = 'Goodbye!';
 const WELCOME_OUTPUT = "Let's add an expense. How much did you spend?";
-const WELCOME_REPROMPT =
-  "Let me know what you bought or how much you spent.";
+const WELCOME_REPROMPT = 'Let me know what you bought or how much you spent.';
 const EXPENSE_RECAP_SIGN_OFF = [
   'You a baller son. Keep flossing that cheddar.',
   'You gotsta pay to play homie, know-whatam-sayin.',
@@ -48,9 +47,11 @@ const LaunchRequestHandler = {
 const InProgressAddExpenseHandler = {
   canHandle(handlerInput: HandlerInput) {
     const request = handlerInput.requestEnvelope.request;
-    return request.type === 'IntentRequest' &&
+    return (
+      request.type === 'IntentRequest' &&
       request.intent.name === 'AddExpenseIntent' &&
-      request.dialogState !== 'COMPLETED';
+      request.dialogState !== 'COMPLETED'
+    );
   },
   handle(handlerInput: HandlerInput) {
     const currentIntent = handlerInput.requestEnvelope.request.intent;
@@ -63,18 +64,25 @@ const InProgressAddExpenseHandler = {
 const CompletedAddExpenseHandler = {
   canHandle(handlerInput: HandlerInput) {
     const request = handlerInput.requestEnvelope.request;
-    return request.type === 'IntentRequest' && request.intent.name === 'AddExpenseIntent';
+    return (
+      request.type === 'IntentRequest' &&
+      request.intent.name === 'AddExpenseIntent'
+    );
   },
   handle(handlerInput: HandlerInput) {
     const responseBuilder = handlerInput.responseBuilder;
     const filledSlots = handlerInput.requestEnvelope.request.intent.slots;
     const slotValues = getSlotValues(filledSlots || {});
 
-    const speechOutput = `Okay, I’ve added ${slotValues.expenseAmount.synonym} for ${slotValues.expenseItem.synonym} to today’s expenses. Good job keeping track of your expenses! ${getRandomPhrase(EXPENSE_RECAP_SIGN_OFF)} Now I gotsa go fuck some ass. Alexa out!`;
+    const speechOutput = `Okay, I’ve added ${
+      slotValues.expenseAmount.synonym
+    } for ${
+      slotValues.expenseItem.synonym
+    } to today’s expenses. Good job keeping track of your expenses! ${getRandomPhrase(
+      EXPENSE_RECAP_SIGN_OFF,
+    )} <emphasis level="strong">Now I gotsta go fuck some shit up.</emphasis> <amazon:effect name="whispered">Alexa out!</amazon:effect>`;
 
-    return responseBuilder
-      .speak(speechOutput)
-      .getResponse();
+    return responseBuilder.speak(speechOutput).getResponse();
   },
 };
 
@@ -152,17 +160,24 @@ function getSlotValues(filledSlots: Slots) {
   Object.keys(filledSlots).forEach((item) => {
     const name = filledSlots[item].name;
 
-    if (filledSlots[item] != null &&
+    if (
+      filledSlots[item] != null &&
       filledSlots[item].resolutions != null &&
       filledSlots[item].resolutions.resolutionsPerAuthority != null &&
       filledSlots[item].resolutions.resolutionsPerAuthority[0] != null &&
       filledSlots[item].resolutions.resolutionsPerAuthority[0].status != null &&
-      filledSlots[item].resolutions.resolutionsPerAuthority[0].status.code != null) {
-      switch (filledSlots[item].resolutions.resolutionsPerAuthority[0].status.code) {
+      filledSlots[item].resolutions.resolutionsPerAuthority[0].status.code !=
+        null
+    ) {
+      switch (
+        filledSlots[item].resolutions.resolutionsPerAuthority[0].status.code
+      ) {
         case 'ER_SUCCESS_MATCH':
           slotValues[name] = {
             synonym: filledSlots[item].value,
-            resolved: filledSlots[item].resolutions.resolutionsPerAuthority[0].values[0].value.name,
+            resolved:
+              filledSlots[item].resolutions.resolutionsPerAuthority[0].values[0]
+                .value.name,
             isValidated: true,
           };
           break;
@@ -190,7 +205,7 @@ function getSlotValues(filledSlots: Slots) {
 
 function getRandomPhrase(array: string[]) {
   const i = Math.floor(Math.random() * array.length);
-  return (array[i]);
+  return array[i];
 }
 
 const skillBuilder = SkillBuilders.custom();

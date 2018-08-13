@@ -43,9 +43,6 @@
             }
           ],
           "samples": [
-            "the amount was {expenseAmount}",
-            "the expense was for {expenseItem}",
-            "{expenseAmount}",
             "i bought {expenseItem}",
             "i spent {expenseAmount}",
             "add {expenseAmount} for {expenseItem}",
@@ -177,10 +174,8 @@
       "intents": [
         {
           "name": "AddExpenseIntent",
-          "confirmationRequired": true,
-          "prompts": {
-            "confirmation": "Confirm.Intent.222184568517"
-          },
+          "confirmationRequired": false,
+          "prompts": {},
           "slots": [
             {
               "name": "expenseAmount",
@@ -240,15 +235,6 @@
           {
             "type": "PlainText",
             "value": "What did you buy?"
-          }
-        ]
-      },
-      {
-        "id": "Confirm.Intent.222184568517",
-        "variations": [
-          {
-            "type": "PlainText",
-            "value": "To confirm, I think you asked me to add {expenseAmount} for {expenseItem} . If that is correct, say yes. Otherwise, to fix the expense item say, the the expense was for wine. Or to fix the amount say, the amount was ten dollars."
           }
         ]
       }
