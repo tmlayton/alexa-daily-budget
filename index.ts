@@ -24,11 +24,6 @@ const FALLBACK_REPROMPT = 'What can I help you with?';
 const STOP_MESSAGE = 'Goodbye!';
 const WELCOME_OUTPUT = "Let's add an expense. How much did you spend?";
 const WELCOME_REPROMPT = 'Let me know what you bought or how much you spent.';
-const EXPENSE_RECAP_SIGN_OFF = [
-  'You a baller son. Keep flossing that cheddar.',
-  'You gotsta pay to play homie, know-whatam-sayin.',
-  'You trackin dem benjamins like the Navy Seals tracked Osama bin Laden.',
-];
 
 const LaunchRequestHandler = {
   canHandle(handlerInput: HandlerInput) {
@@ -78,9 +73,7 @@ const CompletedAddExpenseHandler = {
       slotValues.expenseAmount.synonym
     } for ${
       slotValues.expenseItem.synonym
-    } to today’s expenses. Good job! ${getRandomPhrase(
-      EXPENSE_RECAP_SIGN_OFF,
-    )} Now I gotsta go fuck some shit up. <amazon:effect name="whispered">Alexa out!</amazon:effect>`;
+    } to today’s expenses.`;
 
     return responseBuilder.speak(speechOutput).getResponse();
   },
