@@ -1,35 +1,79 @@
 import {HandlerInput, SkillBuilders} from 'ask-sdk';
+import {Slot} from 'ask-sdk-model';
 
-const ALEXA_SKILL_NAME = 'Daily Budget';
-const GET_FACT_MESSAGE = "Here's your fact: ";
+interface Slots {
+  [key: string]: Slot;
+}
+
+interface SlotValue {
+  synonym: string;
+  resolved: string;
+  isValidated: boolean;
+}
+
+interface SlotValues {
+  [key: string]: SlotValue;
+}
+
 const HELP_MESSAGE =
-  'You can say tell me a space fact, or, you can say exit... What can I help you with?';
+  'You can say add $8.02 for Lyft ride, or, you can say exit... What can I help you with?';
 const HELP_REPROMPT = 'What can I help you with?';
 const FALLBACK_MESSAGE =
-  "The Space Facts skill can't help you with that.  It can help you discover facts about space if you say tell me a space fact. What can I help you with?";
+  "The Daily Budget skill can't help you with that. It can add an expense to your daily budget Google Sheet. What can I help you with?";
 const FALLBACK_REPROMPT = 'What can I help you with?';
 const STOP_MESSAGE = 'Goodbye!';
-
-const data = [
-  "Sometimes I feel like a nut, sometimes I don't. Almond Joy has nuts, Mounds don't.",
+const WELCOME_OUTPUT = "Let's add an expense. How much did you spend?";
+const WELCOME_REPROMPT =
+  "Let me know what you bought or how much you spent.";
+const EXPENSE_RECAP_SIGN_OFF = [
+  'You a baller son. Keep flossing that cheddar.',
+  'You gotsta pay to play homie, know-whatam-sayin.',
+  'You trackin dem benjamins like the Navy Seals tracked Osama bin Laden.',
 ];
 
-const GetNewFactHandler = {
+const LaunchRequestHandler = {
   canHandle(handlerInput: HandlerInput) {
     const request = handlerInput.requestEnvelope.request;
-    return (
-      request.type === 'LaunchRequest' ||
-      (request.type === 'IntentRequest' &&
-        request.intent.name === 'GetNewFactIntent')
-    );
+    return request.type === 'LaunchRequest';
   },
   handle(handlerInput: HandlerInput) {
-    const randomFact = data[Math.floor(Math.random() * data.length)];
-    const speechOutput = GET_FACT_MESSAGE + randomFact;
+    const responseBuilder = handlerInput.responseBuilder;
+    return responseBuilder
+      .speak(WELCOME_OUTPUT)
+      .reprompt(WELCOME_REPROMPT)
+      .getResponse();
+  },
+};
 
+const InProgressAddExpenseHandler = {
+  canHandle(handlerInput: HandlerInput) {
+    const request = handlerInput.requestEnvelope.request;
+    return request.type === 'IntentRequest' &&
+      request.intent.name === 'AddExpenseIntent' &&
+      request.dialogState !== 'COMPLETED';
+  },
+  handle(handlerInput: HandlerInput) {
+    const currentIntent = handlerInput.requestEnvelope.request.intent;
     return handlerInput.responseBuilder
+      .addDelegateDirective(currentIntent)
+      .getResponse();
+  },
+};
+
+const CompletedAddExpenseHandler = {
+  canHandle(handlerInput: HandlerInput) {
+    const request = handlerInput.requestEnvelope.request;
+    return request.type === 'IntentRequest' && request.intent.name === 'AddExpenseIntent';
+  },
+  handle(handlerInput: HandlerInput) {
+    const responseBuilder = handlerInput.responseBuilder;
+    const filledSlots = handlerInput.requestEnvelope.request.intent.slots;
+    const slotValues = getSlotValues(filledSlots || {});
+
+    const speechOutput = `Okay, I’ve added ${slotValues.expenseAmount.synonym} for ${slotValues.expenseItem.synonym} to today’s expenses. Good job keeping track of your expenses! ${getRandomPhrase(EXPENSE_RECAP_SIGN_OFF)} Now I gotsa go fuck some ass. Alexa out!`;
+
+    return responseBuilder
       .speak(speechOutput)
-      .withSimpleCard(ALEXA_SKILL_NAME, randomFact)
       .getResponse();
   },
 };
@@ -86,10 +130,6 @@ const SessionEndedRequestHandler = {
     return request.type === 'SessionEndedRequest';
   },
   handle(handlerInput: HandlerInput) {
-    console.log(
-      `Session ended. Request dump: ${handlerInput.requestEnvelope.request}`,
-    );
-
     return handlerInput.responseBuilder.getResponse();
   },
 };
@@ -99,8 +139,6 @@ const ErrorHandler = {
     return true;
   },
   handle(handlerInput: HandlerInput, error: Error) {
-    console.log(`Error handled: ${error.message}`);
-
     return handlerInput.responseBuilder
       .speak('Sorry, an error occurred.')
       .reprompt('Sorry, an error occurred.')
@@ -108,11 +146,60 @@ const ErrorHandler = {
   },
 };
 
+function getSlotValues(filledSlots: Slots) {
+  const slotValues: SlotValues = {};
+
+  Object.keys(filledSlots).forEach((item) => {
+    const name = filledSlots[item].name;
+
+    if (filledSlots[item] != null &&
+      filledSlots[item].resolutions != null &&
+      filledSlots[item].resolutions.resolutionsPerAuthority != null &&
+      filledSlots[item].resolutions.resolutionsPerAuthority[0] != null &&
+      filledSlots[item].resolutions.resolutionsPerAuthority[0].status != null &&
+      filledSlots[item].resolutions.resolutionsPerAuthority[0].status.code != null) {
+      switch (filledSlots[item].resolutions.resolutionsPerAuthority[0].status.code) {
+        case 'ER_SUCCESS_MATCH':
+          slotValues[name] = {
+            synonym: filledSlots[item].value,
+            resolved: filledSlots[item].resolutions.resolutionsPerAuthority[0].values[0].value.name,
+            isValidated: true,
+          };
+          break;
+        case 'ER_SUCCESS_NO_MATCH':
+          slotValues[name] = {
+            synonym: filledSlots[item].value,
+            resolved: filledSlots[item].value,
+            isValidated: false,
+          };
+          break;
+        default:
+          break;
+      }
+    } else {
+      slotValues[name] = {
+        synonym: filledSlots[item].value,
+        resolved: filledSlots[item].value,
+        isValidated: false,
+      };
+    }
+  });
+
+  return slotValues;
+}
+
+function getRandomPhrase(array: string[]) {
+  const i = Math.floor(Math.random() * array.length);
+  return (array[i]);
+}
+
 const skillBuilder = SkillBuilders.custom();
 
 export const handler = skillBuilder
   .addRequestHandlers(
-    GetNewFactHandler,
+    LaunchRequestHandler,
+    InProgressAddExpenseHandler,
+    CompletedAddExpenseHandler,
     HelpHandler,
     ExitHandler,
     FallbackHandler,

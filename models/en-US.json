@@ -16,30 +16,242 @@
           "samples": []
         },
         {
-          "name": "AMAZON.FallbackIntent",
-          "samples": []
+          "name": "AddExpenseIntent",
+          "slots": [
+            {
+              "name": "expenseAmount",
+              "type": "CURRENCY",
+              "samples": [
+                "the expense was {expenseAmount}",
+                "it cost {expenseAmount}",
+                "I spent {expenseAmount}",
+                "it was {expenseAmount}",
+                "{expenseAmount}"
+              ]
+            },
+            {
+              "name": "expenseItem",
+              "type": "EXPENSE_ITEMS",
+              "samples": [
+                "The expense was for {expenseItem}",
+                "The item was {expenseItem}",
+                "It was {expenseItem}",
+                "I was for {expenseItem}",
+                "I bought {expenseItem}",
+                "{expenseItem}"
+              ]
+            }
+          ],
+          "samples": [
+            "the amount was {expenseAmount}",
+            "the expense was for {expenseItem}",
+            "{expenseAmount}",
+            "i bought {expenseItem}",
+            "i spent {expenseAmount}",
+            "add {expenseAmount} for {expenseItem}",
+            "add an expense",
+            "add expense"
+          ]
         },
         {
-          "name": "GetNewFactIntent",
-          "samples": [
-            "a fact",
-            "a space fact",
-            "tell me a fact",
-            "tell me a space fact",
-            "give me a fact",
-            "give me a space fact",
-            "tell me trivia",
-            "tell me a space trivia",
-            "give me trivia",
-            "give me a space trivia",
-            "give me some information",
-            "give me some space information",
-            "tell me something",
-            "give me something"
-          ],
-          "slots": []
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        }
+      ],
+      "types": [
+        {
+          "name": "CURRENCY",
+          "values": [
+            {
+              "name": {
+                "value": "$.03",
+                "synonyms": ["3¢"]
+              }
+            },
+            {
+              "name": {
+                "value": "$104.13"
+              }
+            },
+            {
+              "name": {
+                "value": "$55"
+              }
+            },
+            {
+              "name": {
+                "value": "$8"
+              }
+            },
+            {
+              "name": {
+                "value": "$1004.22"
+              }
+            },
+            {
+              "name": {
+                "value": "$.17",
+                "synonyms": ["17¢"]
+              }
+            },
+            {
+              "name": {
+                "value": "$43.50"
+              }
+            }
+          ]
+        },
+        {
+          "name": "EXPENSE_ITEMS",
+          "values": [
+            {
+              "name": {
+                "value": "big things that are long"
+              }
+            },
+            {
+              "name": {
+                "value": "total wine"
+              }
+            },
+            {
+              "name": {
+                "value": "macbook pro"
+              }
+            },
+            {
+              "name": {
+                "value": "drinks"
+              }
+            },
+            {
+              "name": {
+                "value": "wine"
+              }
+            },
+            {
+              "name": {
+                "value": "Flight to stl"
+              }
+            },
+            {
+              "name": {
+                "value": "breakfast"
+              }
+            },
+            {
+              "name": {
+                "value": "any random item"
+              }
+            },
+            {
+              "name": {
+                "value": "tim's birthday gift"
+              }
+            },
+            {
+              "name": {
+                "value": "pizza"
+              }
+            },
+            {
+              "name": {
+                "value": "dinner"
+              }
+            },
+            {
+              "name": {
+                "value": "amazon fresh"
+              }
+            },
+            {
+              "name": {
+                "value": "cigs"
+              }
+            }
+          ]
         }
       ]
-    }
+    },
+    "dialog": {
+      "intents": [
+        {
+          "name": "AddExpenseIntent",
+          "confirmationRequired": true,
+          "prompts": {
+            "confirmation": "Confirm.Intent.222184568517"
+          },
+          "slots": [
+            {
+              "name": "expenseAmount",
+              "type": "CURRENCY",
+              "confirmationRequired": false,
+              "elicitationRequired": true,
+              "prompts": {
+                "elicitation": "Elicit.Slot.1399636534279.665376488741"
+              }
+            },
+            {
+              "name": "expenseItem",
+              "type": "EXPENSE_ITEMS",
+              "confirmationRequired": false,
+              "elicitationRequired": true,
+              "prompts": {
+                "elicitation": "Elicit.Slot.1399636534279.315007744482"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "prompts": [
+      {
+        "id": "Elicit.Slot.1399636534279.665376488741",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "What did it cost?"
+          },
+          {
+            "type": "PlainText",
+            "value": "How much did you spend?"
+          },
+          {
+            "type": "PlainText",
+            "value": "How much was the expense?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.1399636534279.315007744482",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "What was the expense for?"
+          },
+          {
+            "type": "PlainText",
+            "value": "What was the expense?"
+          },
+          {
+            "type": "PlainText",
+            "value": "What was the item?"
+          },
+          {
+            "type": "PlainText",
+            "value": "What did you buy?"
+          }
+        ]
+      },
+      {
+        "id": "Confirm.Intent.222184568517",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "To confirm, I think you asked me to add {expenseAmount} for {expenseItem} . If that is correct, say yes. Otherwise, to fix the expense item say, the the expense was for wine. Or to fix the amount say, the amount was ten dollars."
+          }
+        ]
+      }
+    ]
   }
 }
