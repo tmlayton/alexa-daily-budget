@@ -43,6 +43,9 @@
             }
           ],
           "samples": [
+            "add {expenseAmount}",
+            "add an expense for {expenseItem}",
+            "{expenseAmount}",
             "i bought {expenseItem}",
             "i spent {expenseAmount}",
             "add {expenseAmount} for {expenseItem}",
@@ -101,6 +104,21 @@
         {
           "name": "EXPENSE_ITEMS",
           "values": [
+            {
+              "name": {
+                "value": "lyft ride"
+              }
+            },
+            {
+              "name": {
+                "value": "big black eyelashes"
+              }
+            },
+            {
+              "name": {
+                "value": "giant hotdogs"
+              }
+            },
             {
               "name": {
                 "value": "big things that are long"

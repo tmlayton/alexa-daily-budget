@@ -80,7 +80,7 @@ const CompletedAddExpenseHandler = {
       slotValues.expenseItem.synonym
     } to today’s expenses. Good job keeping track of your expenses! ${getRandomPhrase(
       EXPENSE_RECAP_SIGN_OFF,
-    )} <emphasis level="strong">Now I gotsta go fuck some shit up.</emphasis> <amazon:effect name="whispered">Alexa out!</amazon:effect>`;
+    )} Now I gotsta go fuck some shit up. <amazon:effect name="whispered">Alexa out!</amazon:effect>`;
 
     return responseBuilder.speak(speechOutput).getResponse();
   },
@@ -224,8 +224,8 @@ export const handler = skillBuilder
   .lambda();
 
 // import {google} from 'googleapis';
-//  import config from './config.json';
-//  console.log(config.GOOGLE_API_KEY);
+// import config from './config.json';
+// console.log(config.GOOGLE_API_KEY);
 // const availableColumns = ['B', 'C', 'D', 'E', 'F', 'F', 'G'];
 // const sheets = google.sheets({version: 'v4', auth: config.GOOGLE_API_KEY})
 
