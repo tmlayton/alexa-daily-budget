@@ -78,7 +78,7 @@ const CompletedAddExpenseHandler = {
       slotValues.expenseAmount.synonym
     } for ${
       slotValues.expenseItem.synonym
-    } to today’s expenses. Good job keeping track of your expenses! ${getRandomPhrase(
+    } to today’s expenses. Good job! ${getRandomPhrase(
       EXPENSE_RECAP_SIGN_OFF,
     )} Now I gotsta go fuck some shit up. <amazon:effect name="whispered">Alexa out!</amazon:effect>`;
 

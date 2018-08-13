@@ -43,14 +43,11 @@
             }
           ],
           "samples": [
-            "add {expenseAmount}",
-            "add an expense for {expenseItem}",
+            "add {expenseAmount} for {expenseItem}",
             "{expenseAmount}",
             "i bought {expenseItem}",
             "i spent {expenseAmount}",
-            "add {expenseAmount} for {expenseItem}",
-            "add an expense",
-            "add expense"
+            "add an expense"
           ]
         },
         {
@@ -62,6 +59,16 @@
         {
           "name": "CURRENCY",
           "values": [
+            {
+              "name": {
+                "value": "$80.00"
+              }
+            },
+            {
+              "name": {
+                "value": "$80"
+              }
+            },
             {
               "name": {
                 "value": "$.03",
@@ -104,6 +111,11 @@
         {
           "name": "EXPENSE_ITEMS",
           "values": [
+            {
+              "name": {
+                "value": "hot dogs"
+              }
+            },
             {
               "name": {
                 "value": "lyft ride"
