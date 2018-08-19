@@ -27,13 +27,40 @@
               "name": "expenseItem",
               "type": "EXPENSE_ITEMS",
               "samples": ["{expenseItem}"]
+            },
+            {
+              "name": "expenseDate",
+              "type": "AMAZON.DATE"
             }
           ],
-          "samples": ["add {expenseAmount} for {expenseItem}", "add an expense"]
+          "samples": [
+            "add {expenseAmount} for {expenseItem} for {expenseDate}",
+            "add an expense for {expenseDate}",
+            "add an expense on {expenseDate}",
+            "add {expenseAmount} for {expenseItem} on {expenseDate}",
+            "add {expenseAmount} for {expenseItem}",
+            "add an expense"
+          ]
         },
         {
           "name": "AMAZON.FallbackIntent",
           "samples": []
+        },
+        {
+          "name": "GetBudgetInfoIntent",
+          "slots": [],
+          "samples": [
+            "the lowdown",
+            "how much is left in todays budget",
+            "how much have i saved",
+            "whats the total for today",
+            "how much have i spent",
+            "how am i doing",
+            "how are we doing",
+            "get todays info",
+            "whats the lowdown",
+            "get todays budget"
+          ]
         }
       ],
       "types": [
@@ -215,6 +242,13 @@
               "prompts": {
                 "elicitation": "Elicit.Slot.1480560207931.843654528854"
               }
+            },
+            {
+              "name": "expenseDate",
+              "type": "AMAZON.DATE",
+              "confirmationRequired": false,
+              "elicitationRequired": false,
+              "prompts": {}
             }
           ]
         }

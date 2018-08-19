@@ -20,16 +20,17 @@ interface SlotValues {
 }
 
 const HELP_MESSAGE =
-  'You can say add $8.02 for Lyft ride, or, you can say exit... What can I help you with?';
+  'You can say things like, "add $13.37 for Baja Blast", or, you can say exit... What can I help you with?';
 const HELP_REPROMPT = 'What can I help you with?';
 const FALLBACK_MESSAGE =
-  "The Daily Budget skill can't help you with that. It can add an expense to your daily budget Google Sheet. What can I help you with?";
+  'Sorry, I didn’t quite get that. The Daily Budget skill can add an expense to your daily expenses. What can I help you with?';
 const FALLBACK_REPROMPT = 'What can I help you with?';
 const STOP_MESSAGE = 'Goodbye!';
 const WELCOME_OUTPUT =
-  'To get started say, add an expense. Or you can say, add $8 for Lyft.';
-const WELCOME_REPROMPT = 'To get started say, add an expense.';
+  'To get started say, add an expense. Or you can say things like, "add $13.37 for Baja Blast.", or, "get today’s budget."';
+const WELCOME_REPROMPT = 'To get started say, add an expense, or, get today’s budget.';
 const DATE_COLUMN = 'A';
+const INFO_COLUMNS = ['B', 'C', 'D'];
 const AVAILABLE_COLUMNS = Object.freeze([
   'F',
   'G',
@@ -95,22 +96,92 @@ const CompletedAddExpenseHandler = {
   },
   handle(handlerInput: HandlerInput) {
     const responseBuilder = handlerInput.responseBuilder;
-    const filledSlots = handlerInput.requestEnvelope.request.intent.slots;
-    const slotValues = getSlotValues(filledSlots || {});
+    const slots = handlerInput.requestEnvelope.request.intent.slots;
+    const slotValues = getSlotValues(slots || {});
 
-    const offset = -7;
-    const todayInPDT = new Date(new Date().getTime() + offset * 3600 * 1000);
+    let date;
+    let dateSpeech;
+
+    if (slots.expenseDate.value != null) {
+      date = new Date(slots.expenseDate.value);
+      dateSpeech = `${date.toLocaleDateString('en-US', {
+        month: 'long',
+      })} ${ordinalSuffixFor(date.getDate())}`;
+    } else {
+      const offset = -7;
+      const todayInPDT = new Date(new Date().getTime() + offset * 3600 * 1000);
+      date = todayInPDT;
+      dateSpeech = 'today';
+    }
 
     addExpense(
       slotValues.expenseItem.synonym,
       slotValues.expenseAmount.synonym,
-      todayInPDT,
+      date,
     );
 
     const speechOutput = `Okay, I’ve added ${
       slotValues.expenseAmount.synonym
-    } for ${slotValues.expenseItem.synonym} to today’s expenses. Good job boo!`;
+    } for ${
+      slotValues.expenseItem.synonym
+    } to ${dateSpeech}’s expenses. Good job boo!`;
 
+    return responseBuilder.speak(speechOutput).getResponse();
+  },
+};
+
+const GetBudgetInfoHandler = {
+  canHandle(handlerInput: HandlerInput) {
+    const request = handlerInput.requestEnvelope.request;
+    return (
+      request.type === 'IntentRequest' &&
+      request.intent.name === 'GetBudgetInfoIntent'
+    );
+  },
+  async handle(handlerInput: HandlerInput) {
+    const responseBuilder = handlerInput.responseBuilder;
+
+    const offset = -7;
+    const todayInPDT = new Date(new Date().getTime() + offset * 3600 * 1000);
+
+    const {client_secret, client_id, redirect_uris} = credentials.installed;
+    const oAuth2Client = new google.auth.OAuth2(
+      client_id,
+      client_secret,
+      redirect_uris[0],
+    );
+    oAuth2Client.setCredentials(token);
+    const sheets = google.sheets({version: 'v4', auth: oAuth2Client});
+
+    const request1 = {
+      spreadsheetId: config.SPREADSHEET_ID,
+      range: `${DATE_COLUMN}1:${DATE_COLUMN}999`,
+      dateTimeRenderOption: 'FORMATTED_STRING',
+      majorDimension: 'COLUMNS',
+      valueRenderOption: 'FORMATTED_VALUE',
+    };
+
+    const response1 = await sheets.spreadsheets.values.get(request1);
+    const sheetDates = response1.data.values[0];
+    const row =
+      sheetDates.findIndex((dateAsString: string) => {
+        const indexDate = new Date(dateAsString);
+        return indexDate.toDateString() === todayInPDT.toDateString();
+      }) + 2;
+
+    const request2 = {
+      spreadsheetId: config.SPREADSHEET_ID,
+      range: `${INFO_COLUMNS[0]}${row}:${
+        INFO_COLUMNS[INFO_COLUMNS.length - 1]
+      }${row}`,
+      dateTimeRenderOption: 'FORMATTED_STRING',
+      majorDimension: 'ROWS',
+      valueRenderOption: 'FORMATTED_VALUE',
+    };
+
+    const response2 = await sheets.spreadsheets.values.get(request2);
+    const [total, remaining, saved] = response2.data.values[0];
+    const speechOutput = `So far you’ve spent ${total} today and have ${remaining} remaining. Your total amount saved day over day is ${saved}`;
     return responseBuilder.speak(speechOutput).getResponse();
   },
 };
@@ -239,6 +310,7 @@ export const handler = skillBuilder
     LaunchRequestHandler,
     InProgressAddExpenseHandler,
     CompletedAddExpenseHandler,
+    GetBudgetInfoHandler,
     HelpHandler,
     ExitHandler,
     FallbackHandler,
@@ -326,4 +398,20 @@ function addExpense(name: string, amount: string, date: Date) {
       });
     });
   });
+}
+
+function ordinalSuffixFor(i: number) {
+  const j = i % 10;
+  const k = i % 100;
+
+  if (j == 1 && k != 11) {
+    return i + 'st';
+  }
+  if (j == 2 && k != 12) {
+    return i + 'nd';
+  }
+  if (j == 3 && k != 13) {
+    return i + 'rd';
+  }
+  return i + 'th';
 }
