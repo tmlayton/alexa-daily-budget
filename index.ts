@@ -1,5 +1,9 @@
 import {HandlerInput, SkillBuilders} from 'ask-sdk';
 import {Slot} from 'ask-sdk-model';
+import {google} from 'googleapis';
+import config from './config.json';
+import credentials from './credentials.json';
+import token from './token.json';
 
 interface Slots {
   [key: string]: Slot;
@@ -25,6 +29,30 @@ const STOP_MESSAGE = 'Goodbye!';
 const WELCOME_OUTPUT =
   'To get started say, add an expense. Or you can say, add $8 for Lyft.';
 const WELCOME_REPROMPT = 'To get started say, add an expense.';
+const DATE_COLUMN = 'A';
+const AVAILABLE_COLUMNS = Object.freeze([
+  'F',
+  'G',
+  'H',
+  'I',
+  'J',
+  'K',
+  'L',
+  'M',
+  'N',
+  'O',
+  'P',
+  'Q',
+  'R',
+  'S',
+  'T',
+  'U',
+  'V',
+  'W',
+  'X',
+  'Y',
+  'Z',
+]);
 
 const LaunchRequestHandler = {
   canHandle(handlerInput: HandlerInput) {
@@ -70,9 +98,18 @@ const CompletedAddExpenseHandler = {
     const filledSlots = handlerInput.requestEnvelope.request.intent.slots;
     const slotValues = getSlotValues(filledSlots || {});
 
+    const offset = -7;
+    const todayInPDT = new Date(new Date().getTime() + offset * 3600 * 1000);
+
+    addExpense(
+      slotValues.expenseItem.synonym,
+      slotValues.expenseAmount.synonym,
+      todayInPDT,
+    );
+
     const speechOutput = `Okay, I’ve added ${
       slotValues.expenseAmount.synonym
-    } for ${slotValues.expenseItem.synonym} to today’s expenses.`;
+    } for ${slotValues.expenseItem.synonym} to today’s expenses. Good job boo!`;
 
     return responseBuilder.speak(speechOutput).getResponse();
   },
@@ -210,55 +247,83 @@ export const handler = skillBuilder
   .addErrorHandlers(ErrorHandler)
   .lambda();
 
-// import {google} from 'googleapis';
-// import config from './config.json';
-// console.log(config.GOOGLE_API_KEY);
-// const availableColumns = ['B', 'C', 'D', 'E', 'F', 'F', 'G'];
-// const sheets = google.sheets({version: 'v4', auth: config.GOOGLE_API_KEY})
+function addExpense(name: string, amount: string, date: Date) {
+  const {client_secret, client_id, redirect_uris} = credentials.installed;
+  const oAuth2Client = new google.auth.OAuth2(
+    client_id,
+    client_secret,
+    redirect_uris[0],
+  );
+  oAuth2Client.setCredentials(token);
+  const sheets = google.sheets({version: 'v4', auth: oAuth2Client});
 
-// function addExpense(name, amount, date) {
-//   const row = getRowByDate(date);
-//   const column = findNextAvailableColumn(row);
-//   setCellValue(column, row, name);
-//   setCellValue(column, row + 1, amount);
-// }
+  const request1 = {
+    spreadsheetId: config.SPREADSHEET_ID,
+    range: `${DATE_COLUMN}1:${DATE_COLUMN}999`,
+    dateTimeRenderOption: 'FORMATTED_STRING',
+    majorDimension: 'COLUMNS',
+    valueRenderOption: 'FORMATTED_VALUE',
+  };
 
-// function getRowByDate(date) {
-//   return 1;
-// }
+  sheets.spreadsheets.values.get(request1, (err: any, response: any) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
 
-// function findNextAvailableColumn(row) {
-//   return availableColumns.find((column) => {
-//     const cellValue = getCellValue(column, row);
-//     return cellValue == null || cellValue === '';
-//   });
-// }
+    const sheetDates = response.data.values[0];
+    const row =
+      sheetDates.findIndex((dateAsString: string) => {
+        const indexDate = new Date(dateAsString);
+        return indexDate.toDateString() === date.toDateString();
+      }) + 1;
 
-// function getCellValue(column, row): string {
-//   // Google sheets API read here
-//   return 'hi';
-// }
+    const request2 = {
+      spreadsheetId: config.SPREADSHEET_ID,
+      range: `${AVAILABLE_COLUMNS[0]}${row}:${
+        AVAILABLE_COLUMNS[AVAILABLE_COLUMNS.length - 1]
+      }${row}`,
+      dateTimeRenderOption: 'FORMATTED_STRING',
+      majorDimension: 'ROWS',
+      valueRenderOption: 'FORMATTED_VALUE',
+    };
 
-// function setCellValue(column, row, value) {
-//   // Google sheets API write here
-// }
+    sheets.spreadsheets.values.get(request2, (err: any, response: any) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
 
-// function authorize() {
-//   const request = {
-//     spreadsheetId: '1CDxht0aHcwMmfeohCZxvamwO9MJJqTCwhF_bWnimHFw',
-//     range: 'A1:A9999',
-//     dateTimeRenderOption: 'FORMATTED_STRING',
-//     majorDimension: 'COLUMNS',
-//     valueRenderOption: 'FORMATTED_VALUE',
-//   };
+      let column;
+      if (response.data.values != null) {
+        column = AVAILABLE_COLUMNS[response.data.values[0].length];
+      } else {
+        column = AVAILABLE_COLUMNS[0];
+      }
 
-//   sheets.spreadsheets.values.get(request, (err, response) => {
-//     if (err) {
-//       console.error(err);
-//       return;
-//     }
+      const request3 = {
+        spreadsheetId: config.SPREADSHEET_ID,
+        range: `${column}${row}:${column}${row + 1}`,
+        includeValuesInResponse: true,
+        responseDateTimeRenderOption: 'FORMATTED_STRING',
+        responseValueRenderOption: 'FORMATTED_VALUE',
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+          values: [[name], [amount]],
+        },
+      };
 
-//     // TODO: Change code below to process the `response` object:
-//     console.log(JSON.stringify(response, null, 2));
-//   });
-// }
+      sheets.spreadsheets.values.update(request3, function(
+        err: any,
+        response: any,
+      ) {
+        if (err) {
+          console.error(err);
+          return;
+        }
+
+        console.log(response.data);
+      });
+    });
+  });
+}

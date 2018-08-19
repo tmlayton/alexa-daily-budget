@@ -8,3 +8,5 @@ node_modules
 # files
 .DS_Store
 config.json
+credentials.json
+token.json
