@@ -28,7 +28,8 @@ const FALLBACK_REPROMPT = 'What can I help you with?';
 const STOP_MESSAGE = 'Goodbye!';
 const WELCOME_OUTPUT =
   'To get started say, add an expense. Or you can say things like, "add $13.37 for Baja Blast.", or, "get today’s budget."';
-const WELCOME_REPROMPT = 'To get started say, add an expense, or, get today’s budget.';
+const WELCOME_REPROMPT =
+  'To get started say, add an expense, or, get today’s budget.';
 const DATE_COLUMN = 'A';
 const INFO_COLUMNS = ['B', 'C', 'D'];
 const AVAILABLE_COLUMNS = Object.freeze([
@@ -94,7 +95,7 @@ const CompletedAddExpenseHandler = {
       request.intent.name === 'AddExpenseIntent'
     );
   },
-  handle(handlerInput: HandlerInput) {
+  async handle(handlerInput: HandlerInput) {
     const responseBuilder = handlerInput.responseBuilder;
     const slots = handlerInput.requestEnvelope.request.intent.slots;
     const slotValues = getSlotValues(slots || {});
@@ -114,7 +115,7 @@ const CompletedAddExpenseHandler = {
       dateSpeech = 'today';
     }
 
-    addExpense(
+    await addExpense(
       slotValues.expenseItem.synonym,
       slotValues.expenseAmount.synonym,
       date,
@@ -140,36 +141,11 @@ const GetBudgetInfoHandler = {
   },
   async handle(handlerInput: HandlerInput) {
     const responseBuilder = handlerInput.responseBuilder;
-
     const offset = -7;
     const todayInPDT = new Date(new Date().getTime() + offset * 3600 * 1000);
-
-    const {client_secret, client_id, redirect_uris} = credentials.installed;
-    const oAuth2Client = new google.auth.OAuth2(
-      client_id,
-      client_secret,
-      redirect_uris[0],
-    );
-    oAuth2Client.setCredentials(token);
-    const sheets = google.sheets({version: 'v4', auth: oAuth2Client});
-
-    const request1 = {
-      spreadsheetId: config.SPREADSHEET_ID,
-      range: `${DATE_COLUMN}1:${DATE_COLUMN}999`,
-      dateTimeRenderOption: 'FORMATTED_STRING',
-      majorDimension: 'COLUMNS',
-      valueRenderOption: 'FORMATTED_VALUE',
-    };
-
-    const response1 = await sheets.spreadsheets.values.get(request1);
-    const sheetDates = response1.data.values[0];
-    const row =
-      sheetDates.findIndex((dateAsString: string) => {
-        const indexDate = new Date(dateAsString);
-        return indexDate.toDateString() === todayInPDT.toDateString();
-      }) + 2;
-
-    const request2 = {
+    const row = (await findRowByDate(todayInPDT)) + 1;
+    const sheets = authorize();
+    const getBudgetRowResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: config.SPREADSHEET_ID,
       range: `${INFO_COLUMNS[0]}${row}:${
         INFO_COLUMNS[INFO_COLUMNS.length - 1]
@@ -177,11 +153,10 @@ const GetBudgetInfoHandler = {
       dateTimeRenderOption: 'FORMATTED_STRING',
       majorDimension: 'ROWS',
       valueRenderOption: 'FORMATTED_VALUE',
-    };
-
-    const response2 = await sheets.spreadsheets.values.get(request2);
-    const [total, remaining, saved] = response2.data.values[0];
+    });
+    const [total, remaining, saved] = getBudgetRowResponse.data.values[0];
     const speechOutput = `So far you’ve spent ${total} today and have ${remaining} remaining. Your total amount saved day over day is ${saved}`;
+
     return responseBuilder.speak(speechOutput).getResponse();
   },
 };
@@ -319,7 +294,7 @@ export const handler = skillBuilder
   .addErrorHandlers(ErrorHandler)
   .lambda();
 
-function addExpense(name: string, amount: string, date: Date) {
+function authorize() {
   const {client_secret, client_id, redirect_uris} = credentials.installed;
   const oAuth2Client = new google.auth.OAuth2(
     client_id,
@@ -327,77 +302,61 @@ function addExpense(name: string, amount: string, date: Date) {
     redirect_uris[0],
   );
   oAuth2Client.setCredentials(token);
-  const sheets = google.sheets({version: 'v4', auth: oAuth2Client});
+  return google.sheets({version: 'v4', auth: oAuth2Client});
+}
 
-  const request1 = {
+async function findRowByDate(date: Date) {
+  const sheets = authorize();
+  const getDateColumnResponse = await sheets.spreadsheets.values.get({
     spreadsheetId: config.SPREADSHEET_ID,
     range: `${DATE_COLUMN}1:${DATE_COLUMN}999`,
     dateTimeRenderOption: 'FORMATTED_STRING',
     majorDimension: 'COLUMNS',
     valueRenderOption: 'FORMATTED_VALUE',
-  };
-
-  sheets.spreadsheets.values.get(request1, (err: any, response: any) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-
-    const sheetDates = response.data.values[0];
-    const row =
-      sheetDates.findIndex((dateAsString: string) => {
-        const indexDate = new Date(dateAsString);
-        return indexDate.toDateString() === date.toDateString();
-      }) + 1;
-
-    const request2 = {
-      spreadsheetId: config.SPREADSHEET_ID,
-      range: `${AVAILABLE_COLUMNS[0]}${row}:${
-        AVAILABLE_COLUMNS[AVAILABLE_COLUMNS.length - 1]
-      }${row}`,
-      dateTimeRenderOption: 'FORMATTED_STRING',
-      majorDimension: 'ROWS',
-      valueRenderOption: 'FORMATTED_VALUE',
-    };
-
-    sheets.spreadsheets.values.get(request2, (err: any, response: any) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-
-      let column;
-      if (response.data.values != null) {
-        column = AVAILABLE_COLUMNS[response.data.values[0].length];
-      } else {
-        column = AVAILABLE_COLUMNS[0];
-      }
-
-      const request3 = {
-        spreadsheetId: config.SPREADSHEET_ID,
-        range: `${column}${row}:${column}${row + 1}`,
-        includeValuesInResponse: true,
-        responseDateTimeRenderOption: 'FORMATTED_STRING',
-        responseValueRenderOption: 'FORMATTED_VALUE',
-        valueInputOption: 'USER_ENTERED',
-        resource: {
-          values: [[name], [amount]],
-        },
-      };
-
-      sheets.spreadsheets.values.update(request3, function(
-        err: any,
-        response: any,
-      ) {
-        if (err) {
-          console.error(err);
-          return;
-        }
-
-        console.log(response.data);
-      });
-    });
   });
+
+  const sheetDates = getDateColumnResponse.data.values[0];
+
+  return (
+    sheetDates.findIndex((dateAsString: string) => {
+      const indexDate = new Date(dateAsString);
+      return indexDate.toDateString() === date.toDateString();
+    }) + 1
+  );
+}
+
+async function addExpense(name: string, amount: string, date: Date) {
+  const row = await findRowByDate(date);
+  const sheets = authorize();
+
+  // find the first empty column
+  const getExpenseRowResponse = await sheets.spreadsheets.values.get({
+    spreadsheetId: config.SPREADSHEET_ID,
+    range: `${AVAILABLE_COLUMNS[0]}${row}:${
+      AVAILABLE_COLUMNS[AVAILABLE_COLUMNS.length - 1]
+    }${row}`,
+    dateTimeRenderOption: 'FORMATTED_STRING',
+    majorDimension: 'ROWS',
+    valueRenderOption: 'FORMATTED_VALUE',
+  });
+  const column =
+    getExpenseRowResponse.data.values != null
+      ? AVAILABLE_COLUMNS[getExpenseRowResponse.data.values[0].length]
+      : AVAILABLE_COLUMNS[0];
+
+  // insert the expense in the empty column
+  const insertExpenseResponse = await sheets.spreadsheets.values.update({
+    spreadsheetId: config.SPREADSHEET_ID,
+    range: `${column}${row}:${column}${row + 1}`,
+    includeValuesInResponse: true,
+    responseDateTimeRenderOption: 'FORMATTED_STRING',
+    responseValueRenderOption: 'FORMATTED_VALUE',
+    valueInputOption: 'USER_ENTERED',
+    resource: {
+      values: [[name], [amount]],
+    },
+  });
+  console.log(insertExpenseResponse.data);
 }
 
 function ordinalSuffixFor(i: number) {
