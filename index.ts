@@ -20,18 +20,18 @@ interface SlotValues {
 }
 
 const HELP_MESSAGE =
-  'You can say things like, "add $13.37 for Baja Blast", or, you can say exit... What can I help you with?';
+  'You can say things like, "add $10 for pizza", or, you can say exit... What can I help you with?';
 const HELP_REPROMPT = 'What can I help you with?';
 const FALLBACK_MESSAGE =
   'Sorry, I didn’t quite get that. The Daily Budget skill can add an expense to your daily expenses. What can I help you with?';
 const FALLBACK_REPROMPT = 'What can I help you with?';
 const STOP_MESSAGE = 'Goodbye!';
 const WELCOME_OUTPUT =
-  'To get started say, add an expense. Or you can say things like, "add $13.37 for Baja Blast.", or, "get today’s budget."';
+  'To get started say, add an expense. Or you can say things like, "add $10 for pizza.", or, "get today’s budget."';
 const WELCOME_REPROMPT =
   'To get started say, add an expense, or, get today’s budget.';
 const DATE_COLUMN = 'A';
-const INFO_COLUMNS = ['B', 'C', 'D'];
+const INFO_COLUMNS = Object.freeze(['B', 'C', 'D']);
 const AVAILABLE_COLUMNS = Object.freeze([
   'F',
   'G',
@@ -125,7 +125,7 @@ const CompletedAddExpenseHandler = {
       slotValues.expenseAmount.synonym
     } for ${
       slotValues.expenseItem.synonym
-    } to ${dateSpeech}’s expenses. Good job boo!`;
+    } to ${dateSpeech}’s expenses.`;
 
     return responseBuilder.speak(speechOutput).getResponse();
   },
