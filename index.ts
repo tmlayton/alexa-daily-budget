@@ -176,10 +176,12 @@ const GetExpensesHandler = {
 
     let speechOutput;
     if (getExpensesResponse.data.values != null) {
-      const expenses = getExpensesResponse.data.values.map((expense, index, allExpenses) => {
-        const and = index === allExpenses.length - 1 ? 'and ' : '';
-        return and + expense.reverse().join(' for ');
-      }).join(', ');
+      const expenses = getExpensesResponse.data.values
+        .map((expense, index, allExpenses) => {
+          const and = index === allExpenses.length - 1 ? 'and ' : '';
+          return and + expense.reverse().join(' for ');
+        })
+        .join(', ');
       speechOutput = `${dateSpeech}’s expenses are: ${expenses}`;
     } else {
       speechOutput = `There are no expenses for ${dateSpeech}`;
@@ -410,9 +412,12 @@ function dateIntent(dateString: string | null) {
 
   if (dateString != null) {
     date = new Date(dateString);
-    dateSpeech = `${date.toLocaleDateString('en-US', {
-      month: 'long',
-    })} ${ordinalSuffixFor(date.getDate())}`;
+    dateSpeech =
+      date.toDateString() !== getTodayInPST().toDateString()
+        ? `${date.toLocaleDateString('en-US', {
+            month: 'long',
+          })} ${ordinalSuffixFor(date.getDate())}`
+        : 'today';
   } else {
     date = getTodayInPST();
     dateSpeech = 'today';
