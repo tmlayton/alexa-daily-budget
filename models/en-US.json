@@ -48,18 +48,30 @@
         },
         {
           "name": "GetBudgetInfoIntent",
-          "slots": [],
+          "slots": [
+            {
+              "name": "budgetDate",
+              "type": "AMAZON.DATE"
+            }
+          ],
           "samples": [
-            "the lowdown",
-            "how much is left in todays budget",
-            "how much have i saved",
-            "whats the total for today",
-            "how much have i spent",
-            "how am i doing",
-            "how are we doing",
-            "get todays info",
-            "whats the lowdown",
+            "get the budget for {budgetDate}",
+            "get {budgetDate} budget",
             "get todays budget"
+          ]
+        },
+        {
+          "name": "GetExpensesIntent",
+          "slots": [
+            {
+              "name": "expensesDate",
+              "type": "AMAZON.DATE"
+            }
+          ],
+          "samples": [
+            "get the expenses for {expensesDate}",
+            "get {expensesDate} expenses",
+            "get todays expenses"
           ]
         }
       ],

@@ -20,14 +20,14 @@ interface SlotValues {
 }
 
 const HELP_MESSAGE =
-  'You can say things like, "add $10 for pizza", or, you can say exit... What can I help you with?';
+  'You can say things like, "add $10 for pizza", "get today’s budget", "get today’s expenses", or, you can say exit... What can I help you with?';
 const HELP_REPROMPT = 'What can I help you with?';
 const FALLBACK_MESSAGE =
   'Sorry, I didn’t quite get that. The Daily Budget skill can add an expense to your daily expenses. What can I help you with?';
 const FALLBACK_REPROMPT = 'What can I help you with?';
 const STOP_MESSAGE = 'Goodbye!';
 const WELCOME_OUTPUT =
-  'To get started say, add an expense. Or you can say things like, "add $10 for pizza.", or, "get today’s budget."';
+  'To get started say, add an expense, or, to know what else I can do say, help.';
 const WELCOME_REPROMPT =
   'To get started say, add an expense, or, get today’s budget.';
 const DATE_COLUMN = 'A';
@@ -99,21 +99,7 @@ const CompletedAddExpenseHandler = {
     const responseBuilder = handlerInput.responseBuilder;
     const slots = handlerInput.requestEnvelope.request.intent.slots;
     const slotValues = getSlotValues(slots || {});
-
-    let date;
-    let dateSpeech;
-
-    if (slots.expenseDate.value != null) {
-      date = new Date(slots.expenseDate.value);
-      dateSpeech = `${date.toLocaleDateString('en-US', {
-        month: 'long',
-      })} ${ordinalSuffixFor(date.getDate())}`;
-    } else {
-      const offset = -7;
-      const todayInPDT = new Date(new Date().getTime() + offset * 3600 * 1000);
-      date = todayInPDT;
-      dateSpeech = 'today';
-    }
+    const {date, dateSpeech} = dateIntent(slots.expenseDate.value);
 
     await addExpense(
       slotValues.expenseItem.synonym,
@@ -123,9 +109,7 @@ const CompletedAddExpenseHandler = {
 
     const speechOutput = `Okay, I’ve added ${
       slotValues.expenseAmount.synonym
-    } for ${
-      slotValues.expenseItem.synonym
-    } to ${dateSpeech}’s expenses.`;
+    } for ${slotValues.expenseItem.synonym} to ${dateSpeech}’s expenses.`;
 
     return responseBuilder.speak(speechOutput).getResponse();
   },
@@ -141,9 +125,9 @@ const GetBudgetInfoHandler = {
   },
   async handle(handlerInput: HandlerInput) {
     const responseBuilder = handlerInput.responseBuilder;
-    const offset = -7;
-    const todayInPDT = new Date(new Date().getTime() + offset * 3600 * 1000);
-    const row = (await findRowByDate(todayInPDT)) + 1;
+    const slots = handlerInput.requestEnvelope.request.intent.slots;
+    const {date, dateSpeech} = dateIntent(slots.budgetDate.value);
+    const row = (await findRowByDate(date)) + 1;
     const sheets = authorize();
     const getBudgetRowResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: config.SPREADSHEET_ID,
@@ -154,8 +138,52 @@ const GetBudgetInfoHandler = {
       majorDimension: 'ROWS',
       valueRenderOption: 'FORMATTED_VALUE',
     });
+    const {haveOrHad, isOrWas} =
+      dateSpeech === 'today' || date > getTodayInPST()
+        ? {haveOrHad: 'have', isOrWas: 'is'}
+        : {haveOrHad: 'had', isOrWas: 'was'};
     const [total, remaining, saved] = getBudgetRowResponse.data.values[0];
-    const speechOutput = `So far you’ve spent ${total} today and have ${remaining} remaining. Your total amount saved day over day is ${saved}`;
+
+    const speechOutput = `${dateSpeech} you spent ${total} and ${haveOrHad} ${remaining} remaining. Your total amount saved day over day as of ${dateSpeech} ${isOrWas} ${saved}`;
+
+    return responseBuilder.speak(speechOutput).getResponse();
+  },
+};
+
+const GetExpensesHandler = {
+  canHandle(handlerInput: HandlerInput) {
+    const request = handlerInput.requestEnvelope.request;
+    return (
+      request.type === 'IntentRequest' &&
+      request.intent.name === 'GetExpensesIntent'
+    );
+  },
+  async handle(handlerInput: HandlerInput) {
+    const responseBuilder = handlerInput.responseBuilder;
+    const slots = handlerInput.requestEnvelope.request.intent.slots;
+    const {date, dateSpeech} = dateIntent(slots.expensesDate.value);
+    const row = await findRowByDate(date);
+    const sheets = authorize();
+    const getExpensesResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: config.SPREADSHEET_ID,
+      range: `${AVAILABLE_COLUMNS[0]}${row}:${
+        AVAILABLE_COLUMNS[AVAILABLE_COLUMNS.length - 1]
+      }${row + 1}`,
+      dateTimeRenderOption: 'FORMATTED_STRING',
+      majorDimension: 'COLUMNS',
+      valueRenderOption: 'FORMATTED_VALUE',
+    });
+
+    let speechOutput;
+    if (getExpensesResponse.data.values != null) {
+      const expenses = getExpensesResponse.data.values.map((expense, index, allExpenses) => {
+        const and = index === allExpenses.length - 1 ? 'and ' : '';
+        return and + expense.reverse().join(' for ');
+      }).join(', ');
+      speechOutput = `${dateSpeech}’s expenses are: ${expenses}`;
+    } else {
+      speechOutput = `There are no expenses for ${dateSpeech}`;
+    }
 
     return responseBuilder.speak(speechOutput).getResponse();
   },
@@ -286,6 +314,7 @@ export const handler = skillBuilder
     InProgressAddExpenseHandler,
     CompletedAddExpenseHandler,
     GetBudgetInfoHandler,
+    GetExpensesHandler,
     HelpHandler,
     ExitHandler,
     FallbackHandler,
@@ -373,4 +402,25 @@ function ordinalSuffixFor(i: number) {
     return i + 'rd';
   }
   return i + 'th';
+}
+
+function dateIntent(dateString: string | null) {
+  let date;
+  let dateSpeech;
+
+  if (dateString != null) {
+    date = new Date(dateString);
+    dateSpeech = `${date.toLocaleDateString('en-US', {
+      month: 'long',
+    })} ${ordinalSuffixFor(date.getDate())}`;
+  } else {
+    date = getTodayInPST();
+    dateSpeech = 'today';
+  }
+
+  return {date, dateSpeech};
+}
+
+function getTodayInPST() {
+  return new Date(new Date().getTime() + -7 * 3600 * 1000);
 }
