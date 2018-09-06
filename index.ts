@@ -178,7 +178,7 @@ const GetExpensesHandler = {
     if (getExpensesResponse.data.values != null) {
       const expenses = getExpensesResponse.data.values
         .map((expense, index, allExpenses) => {
-          const and = index === allExpenses.length - 1 ? 'and ' : '';
+          const and = (index === allExpenses.length - 1 && index > 0) ? 'and ' : '';
           return and + expense.reverse().join(' for ');
         })
         .join(', ');
