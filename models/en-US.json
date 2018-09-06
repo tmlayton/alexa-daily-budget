@@ -55,9 +55,9 @@
             }
           ],
           "samples": [
+            "get the budget",
             "get the budget for {budgetDate}",
-            "get {budgetDate} budget",
-            "get todays budget"
+            "get {budgetDate} budget"
           ]
         },
         {
@@ -69,9 +69,9 @@
             }
           ],
           "samples": [
+            "get expenses",
             "get the expenses for {expensesDate}",
-            "get {expensesDate} expenses",
-            "get todays expenses"
+            "get {expensesDate} expenses"
           ]
         }
       ],
