@@ -176,6 +176,7 @@ const GetExpensesHandler = {
 
     let speechOutput;
     if (getExpensesResponse.data.values != null) {
+      const totalExpenses = getExpensesResponse.data.values.length
       const expenses = getExpensesResponse.data.values
         .map((expense, index, allExpenses) => {
           const and =
@@ -183,10 +184,10 @@ const GetExpensesHandler = {
           return and + expense.reverse().join(' for ');
         })
         .join(', ');
-      speechOutput = `There ${expenses.length === 1 ? 'is' : 'are'} ${
-        expenses.length
-      } expense${expenses.length === 1 ? '' : 'es'} for ${dateSpeech}. ${
-        expenses.length === 1 ? 'It is' : 'They are'
+      speechOutput = `There ${totalExpenses === 1 ? 'is' : 'are'} ${
+        totalExpenses
+      } expense${totalExpenses === 1 ? '' : 's'} for ${dateSpeech}. ${
+        totalExpenses === 1 ? 'It is' : 'They are'
       }: ${expenses}`;
     } else {
       speechOutput = `There are no expenses for ${dateSpeech}`;
