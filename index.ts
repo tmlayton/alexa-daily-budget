@@ -27,7 +27,7 @@ const FALLBACK_MESSAGE =
 const FALLBACK_REPROMPT = 'What can I help you with?';
 const STOP_MESSAGE = 'Goodbye!';
 const WELCOME_OUTPUT =
-  'To get started say, add an expense, or, to know what else I can do say, help.';
+  'To get started say, add an expense, or, to know what else I can do, say, help.';
 const WELCOME_REPROMPT =
   'To get started say, add an expense, or, get today’s budget.';
 const DATE_COLUMN = 'A';
