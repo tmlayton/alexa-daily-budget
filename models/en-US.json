@@ -73,6 +73,10 @@
             "get the expenses for {expensesDate}",
             "get {expensesDate} expenses"
           ]
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
         }
       ],
       "types": [
@@ -284,7 +288,8 @@
             }
           ]
         }
-      ]
+      ],
+      "delegationStrategy": "SKILL_RESPONSE"
     },
     "prompts": [
       {

@@ -346,7 +346,7 @@ async function findRowByDate(date: Date) {
   const sheets = authorize();
   const getDateColumnResponse = await sheets.spreadsheets.values.get({
     spreadsheetId: config.SPREADSHEET_ID,
-    range: `${DATE_COLUMN}1:${DATE_COLUMN}999`,
+    range: `${DATE_COLUMN}1:${DATE_COLUMN}9999`,
     dateTimeRenderOption: 'FORMATTED_STRING',
     majorDimension: 'COLUMNS',
     valueRenderOption: 'FORMATTED_VALUE',
